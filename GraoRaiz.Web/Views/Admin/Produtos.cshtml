@@ -1,0 +1,40 @@
+@model List<Produto>
+@{
+    ViewData["Title"] = "Produtos e estoque";
+}
+<div class="container">
+    <div class="cabecalho-pagina">
+        <h1>Produtos e estoque</h1>
+        <a class="botao" asp-action="NovoProduto">Cadastrar produto</a>
+    </div>
+    <partial name="_Menu" />
+    <p class="ao-vivo" data-ao-vivo><span class="ponto" aria-hidden="true"></span> Estoque em tempo real · atualizado às <span data-hora>--:--:--</span></p>
+    <div class="rolagem">
+        <table class="tabela">
+            <thead><tr><th>Produto</th><th>Categoria</th><th class="num">Preço</th><th class="num">Estoque</th><th>Situação</th><th>Entrada</th><th><span class="pular">Ações</span></th></tr></thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr data-estoque-id="@p.Id">
+                        <td><strong>@p.Nome</strong>@if (p.PontuacaoSca is not null){<br /><span class="muted">@p.PontuacaoSca?.ToString("0.0") pontos SCA</span>}</td>
+                        <td>@p.NomeCategoria</td>
+                        <td class="num">@p.Preco.ToString("C")</td>
+                        <td class="num"><strong data-qtd>@p.Quantidade</strong> @if (!p.EhKit) { <span class="muted">/ mín. <span data-min>@p.EstoqueMinimo</span></span> } else { <span class="muted">(kit)</span> }</td>
+                        <td data-situacao>
+                            @if (!p.Ativo) { <span class="selo inativo">Inativo</span> }
+                            else if (p.Quantidade == 0) { <span class="selo esgotado">Esgotado</span> }
+                            else if (p.EstoqueBaixo) { <span class="selo baixo">Repor</span> }
+                            else { <span class="selo ok">Normal</span> }
+                        </td>
+                        <td><partial name="_Repor" model="p" /></td>
+                        <td><a class="botao secundario pequeno" asp-action="EditarProduto" asp-route-id="@p.Id">Editar</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>monitorarEstoque('@Url.Action("EstoqueAtual", "Admin")');</script>
+}

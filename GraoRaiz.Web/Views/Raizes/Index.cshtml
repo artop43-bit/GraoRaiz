@@ -1,0 +1,51 @@
+@{
+    ViewData["Title"] = "Raízes do Café";
+}
+<div class="container">
+    <section class="raizes-topo">
+        <h1>Raízes do Café</h1>
+        <p>Cada xícara carrega uma história que começa muito antes da torra. Este espaço conta quem construiu
+            a cafeicultura brasileira e quem planta os grãos que chegam até você.</p>
+    </section>
+
+    <div class="texto-longo">
+        <h2>Uma história construída por mãos negras</h2>
+        <p>No século XIX, o café se tornou o principal produto de exportação do Brasil. A expansão das lavouras,
+            primeiro no Vale do Paraíba e depois no oeste paulista, dependeu do trabalho de africanos escravizados
+            e de seus descendentes. Foram eles que abriram as matas, plantaram, colheram e transportaram o café
+            que saía pelo porto de Santos, cidade onde a Grão Raiz torra os seus grãos hoje.</p>
+        <p>Depois da abolição, em 1888, a população negra foi deixada sem terra, sem indenização e sem acesso
+            a direitos básicos. Esse passado ajuda a explicar desigualdades que ainda existem no campo e na cidade.
+            Reconhecer essa história é parte de valorizar a cultura afro-brasileira como base da identidade nacional,
+            como orientam a Lei nº 10.639/2003 e o Estatuto da Igualdade Racial (Lei nº 12.288/2010).</p>
+
+        <h2>Quem produz os nossos grãos</h2>
+        <p>Compramos microlotes diretamente de famílias e cooperativas, pagando acima do preço de mercado
+            pela qualidade. Conheça os parceiros desta safra (perfis ilustrativos do projeto).</p>
+    </div>
+
+    <div class="produtores">
+        <article class="produtor">
+            <h3>Sítio Santa Luzia</h3>
+            <small>Mogiana, São Paulo</small>
+            <p>Família de agricultores negros que cultiva café há quatro gerações em 12 hectares, com colheita manual seletiva.</p>
+        </article>
+        <article class="produtor">
+            <h3>Cooperativa Mulheres do Cerrado</h3>
+            <small>Cerrado Mineiro, Minas Gerais</small>
+            <p>Grupo de 40 produtoras que dividem secador e armazém. Responsável pelo nosso café com notas de laranja e mel.</p>
+        </article>
+        <article class="produtor">
+            <h3>Associação Quilombola Pedra Alta</h3>
+            <small>Serra da Mantiqueira, Minas Gerais</small>
+            <p>Comunidade quilombola que retomou a lavoura de café em 2015 e hoje produz o nosso microlote de fermentação natural.</p>
+        </article>
+    </div>
+
+    <div class="texto-longo">
+        <h2>O que fazemos a respeito</h2>
+        <p>Divulgamos o nome e a região de cada produtor, garantimos preço justo nas compras diretas e mantemos
+            esta página no site e no aplicativo para que a origem do café nunca fique escondida atrás da marca.</p>
+        <a class="botao" asp-controller="Catalogo" asp-action="Index">Ver os cafés desta safra</a>
+    </div>
+</div>

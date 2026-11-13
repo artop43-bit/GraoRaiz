@@ -1,0 +1,19 @@
+@model Pedido
+@{
+    var registros = Model.Historico.GroupBy(h => h.Status).ToDictionary(g => g.Key, g => g.Last());
+    var cancelado = Model.Status == StatusPedido.Cancelado;
+    var etapas = cancelado ? new[] { StatusPedido.Criado, StatusPedido.Cancelado } : StatusPedido.Fluxo;
+}
+<ol class="linha-tempo" aria-label="Andamento do pedido">
+    @foreach (var etapa in etapas)
+    {
+        var feito = registros.TryGetValue(etapa, out var h);
+        <li class="@(feito ? "feito" : "pendente")">
+            <span class="ponto" aria-hidden="true">@(feito ? "✓" : "")</span>
+            <div>
+                <strong>@StatusPedido.Descricao(etapa)</strong>
+                <small>@(feito ? h!.DataRegistro.ToString("dd/MM/yyyy 'às' HH:mm") : "Aguardando")</small>
+            </div>
+        </li>
+    }
+</ol>

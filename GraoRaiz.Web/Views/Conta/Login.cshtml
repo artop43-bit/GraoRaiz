@@ -1,0 +1,31 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Entrar";
+}
+<div class="estreito" style="max-width:440px">
+    <h1>Entrar</h1>
+    <form class="painel" asp-action="Login" method="post">
+        <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+        @if (Model.Erro is not null)
+        {
+            <p class="aviso erro" role="alert" style="margin:0 0 16px">@Model.Erro</p>
+        }
+        <div class="campo">
+            <label for="Email">E-mail</label>
+            <input id="Email" name="Email" type="email" value="@Model.Email" autocomplete="email" required />
+        </div>
+        <div class="campo">
+            <label for="Senha">Senha</label>
+            <input id="Senha" name="Senha" type="password" autocomplete="current-password" required />
+        </div>
+        <button class="botao largo" type="submit">Entrar</button>
+        <p style="margin:12px 0 0"><a asp-action="EsqueciSenha">Esqueci minha senha</a></p>
+        <p style="margin:16px 0 0">Ainda não tem conta?
+            <a asp-action="Cadastro" asp-route-returnUrl="@Model.ReturnUrl">Criar conta</a></p>
+    </form>
+    <div class="painel" style="margin-top:16px;font-size:.92rem">
+        <strong>Contas de demonstração</strong>
+        <p style="margin:6px 0 0">Cliente: cliente@graoraiz.com.br / cliente123<br />
+            Administrador: admin@graoraiz.com.br / admin123</p>
+    </div>
+</div>

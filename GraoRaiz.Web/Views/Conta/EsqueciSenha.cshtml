@@ -1,0 +1,45 @@
+@model RecuperarSenhaViewModel
+@{
+    ViewData["Title"] = "Esqueci minha senha";
+    var segundaEtapa = Model.CodigoGerado is not null;
+}
+<div class="estreito" style="max-width:480px">
+    <h1>Esqueci minha senha</h1>
+    @if (!segundaEtapa)
+    {
+        <form class="painel" asp-action="EsqueciSenha" method="post">
+            @if (Model.Erro is not null) { <p class="aviso erro" role="alert" style="margin:0 0 16px">@Model.Erro</p> }
+            <p>Informe o e-mail da sua conta. Vamos gerar um código para você criar uma senha nova.</p>
+            <div class="campo">
+                <label for="Email">E-mail</label>
+                <input id="Email" name="Email" type="email" value="@Model.Email" autocomplete="email" required />
+            </div>
+            <button class="botao largo" type="submit">Gerar código</button>
+        </form>
+    }
+    else
+    {
+        <form class="painel" asp-action="RedefinirSenha" method="post">
+            @if (Model.Erro is not null) { <p class="aviso erro" role="alert" style="margin:0 0 16px">@Model.Erro</p> }
+            @if (Model.CodigoGerado != "informado")
+            {
+                <div class="codigo-demo">
+                    <span>Em uma loja real o código chegaria por e-mail. Nesta demonstração, ele é:</span>
+                    <strong>@Model.CodigoGerado</strong>
+                    <small class="muted">Válido por 15 minutos.</small>
+                </div>
+            }
+            <input type="hidden" name="Email" value="@Model.Email" />
+            <div class="campo">
+                <label for="Codigo">Código de 6 números</label>
+                <input id="Codigo" name="Codigo" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required />
+            </div>
+            <div class="campo">
+                <label for="NovaSenha">Nova senha</label>
+                <input id="NovaSenha" name="NovaSenha" type="password" minlength="6" autocomplete="new-password" required />
+            </div>
+            <button class="botao largo" type="submit">Salvar nova senha</button>
+        </form>
+    }
+    <p style="margin-top:16px"><a asp-action="Login">Voltar para o login</a></p>
+</div>

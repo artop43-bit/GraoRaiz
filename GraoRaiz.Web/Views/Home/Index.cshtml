@@ -1,0 +1,54 @@
+@model List<Produto>
+@{
+    ViewData["Title"] = "Início";
+    var destaque = Model.FirstOrDefault();
+}
+<div class="container">
+    <section class="abertura">
+        <div>
+            <h1>Café torrado na semana, moído do jeito que você prepara.</h1>
+            <p class="lead">Microlotes da Mogiana, do Cerrado Mineiro e da Mantiqueira, torrados em Santos.
+                Escolha a moagem na hora da compra e acompanhe o pedido até a sua porta.</p>
+            <div class="acoes">
+                <a class="botao" asp-controller="Catalogo" asp-action="Index">Ver os cafés</a>
+                <a class="botao secundario" asp-controller="Raizes" asp-action="Index">Conhecer os produtores</a>
+            </div>
+        </div>
+        @if (destaque is not null)
+        {
+            <a asp-controller="Catalogo" asp-action="Produto" asp-route-id="@destaque.Id" aria-label="Ver @destaque.Nome">
+                <partial name="_Saca" model="destaque" />
+            </a>
+        }
+    </section>
+
+    <h2>Como funciona</h2>
+    <ol class="passos">
+        <li><h3>Escolha o café</h3><p>Filtre por origem e notas sensoriais e escolha a moagem ideal para o seu preparo.</p></li>
+        <li><h3>Defina a moagem</h3><p>Em grãos, fina para espresso, média para coado ou grossa para prensa francesa.</p></li>
+        <li><h3>Acompanhe a entrega</h3><p>Veja cada etapa do pedido no site ou no aplicativo, da separação à entrega.</p></li>
+    </ol>
+
+    @if (Model.Count > 0)
+    {
+        <div class="cabecalho-pagina">
+            <h2>Maiores pontuações da semana</h2>
+            <a asp-controller="Catalogo" asp-action="Index">Ver catálogo completo</a>
+        </div>
+        <div class="grade-produtos">
+            @foreach (var p in Model)
+            {
+                <partial name="_CartaoProduto" model="p" />
+            }
+        </div>
+    }
+
+    <section class="faixa-raizes">
+        <div>
+            <h2>O café brasileiro tem raízes que merecem ser contadas</h2>
+            <p>A cafeicultura foi construída por africanos escravizados e seus descendentes. Contamos essa história
+                e apresentamos as famílias e cooperativas que produzem os nossos grãos.</p>
+        </div>
+        <a class="botao" asp-controller="Raizes" asp-action="Index">Ler Raízes do Café</a>
+    </section>
+</div>

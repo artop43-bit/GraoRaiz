@@ -1,0 +1,45 @@
+@model Produto
+@{
+    var favoritos = ViewData["Favoritos"] as HashSet<int>;
+    var podeFavoritar = User.Identity?.IsAuthenticated == true && !User.IsInRole(PerfisAcesso.Administrador);
+    var favorito = favoritos?.Contains(Model.Id) == true;
+}
+<article class="produto">
+    <partial name="_Saca" model="Model" />
+    @if (podeFavoritar)
+    {
+        <form class="favoritar" asp-controller="Catalogo" asp-action="Favoritar" asp-route-id="@Model.Id" method="post">
+            <input type="hidden" name="voltarPara" value="@(Context.Request.Path + Context.Request.QueryString)" />
+            <button type="submit" class="coracao @(favorito ? "ativo" : "")" aria-pressed="@(favorito ? "true" : "false")"
+                    aria-label="@(favorito ? "Remover dos favoritos" : "Adicionar aos favoritos"): @Model.Nome">
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+            </button>
+        </form>
+    }
+    <div class="corpo">
+        <h3><a asp-controller="Catalogo" asp-action="Produto" asp-route-id="@Model.Id" asp-route-metodo="@(ViewData["MetodoSelecionado"] as int?)">@Model.Nome</a></h3>
+        @if (Model.TotalAvaliacoes > 0)
+        {
+            <partial name="_Nota" model="Model.MediaAvaliacao" />
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.NotasSensoriais))
+        {
+            <p class="notas">Notas de @Model.NotasSensoriais.ToLower()</p>
+        }
+        else if (!string.IsNullOrWhiteSpace(Model.Descricao))
+        {
+            <p class="notas">@Model.Descricao</p>
+        }
+    </div>
+    <div class="rodape">
+        <span class="preco">@Model.Preco.ToString("C")</span>
+        @if (!Model.Disponivel)
+        {
+            <span class="selo esgotado">Esgotado</span>
+        }
+        else if (Model.EconomiaKit > 0)
+        {
+            <span class="selo economia">Economize @Model.EconomiaKit.ToString("C")</span>
+        }
+    </div>
+</article>

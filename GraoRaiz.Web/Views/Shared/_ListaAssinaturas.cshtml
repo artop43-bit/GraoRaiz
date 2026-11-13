@@ -1,0 +1,34 @@
+@model List<Assinatura>
+<div class="lista-assinaturas">
+    @foreach (var a in Model)
+    {
+        <article class="painel assinatura @a.Status.ToLower()">
+            <div>
+                <h3>@a.NomeProduto</h3>
+                <p class="muted">@a.Quantidade pacote(s) · @a.MoagemDescricao · a cada @a.FrequenciaDias dias</p>
+                <p>
+                    <span class="selo @(a.Status == StatusAssinatura.Ativa ? "ok" : a.Status == StatusAssinatura.Pausada ? "baixo" : "inativo")">@StatusAssinatura.Descricao(a.Status)</span>
+                    @if (a.Status == StatusAssinatura.Ativa)
+                    {
+                        <span>Próxima entrega: <strong>@a.ProximaEntrega.ToString("dd/MM/yyyy")</strong></span>
+                    }
+                </p>
+                <p class="muted" style="margin:0">@a.ValorPorEntrega.ToString("C") por entrega (10% de desconto) · @a.EnderecoResumo</p>
+            </div>
+            @if (a.Status != StatusAssinatura.Cancelada)
+            {
+                <div class="acoes-assinatura">
+                    <form asp-controller="Assinaturas" asp-action="AlterarStatus" asp-route-id="@a.Id" method="post">
+                        <input type="hidden" name="status" value="@(a.Status == StatusAssinatura.Ativa ? StatusAssinatura.Pausada : StatusAssinatura.Ativa)" />
+                        <button class="botao secundario pequeno" type="submit">@(a.Status == StatusAssinatura.Ativa ? "Pausar" : "Retomar")</button>
+                    </form>
+                    <form asp-controller="Assinaturas" asp-action="AlterarStatus" asp-route-id="@a.Id" method="post"
+                          data-confirmar="Cancelar a assinatura de @a.NomeProduto?">
+                        <input type="hidden" name="status" value="@StatusAssinatura.Cancelada" />
+                        <button class="botao secundario pequeno perigo" type="submit">Cancelar</button>
+                    </form>
+                </div>
+            }
+        </article>
+    }
+</div>

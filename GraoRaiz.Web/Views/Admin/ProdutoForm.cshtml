@@ -1,0 +1,81 @@
+@model Produto
+@{
+    var novo = Model.Id == 0;
+    ViewData["Title"] = novo ? "Cadastrar produto" : "Editar produto";
+    var categorias = ViewBag.Categorias as List<Categoria> ?? new();
+}
+<div class="container">
+    <h1>@ViewData["Title"]</h1>
+    <partial name="_Menu" />
+    <form class="painel" asp-action="SalvarProduto" method="post" style="max-width:760px">
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <div class="grade-form">
+            <div class="campo">
+                <label for="Nome">Nome</label>
+                <input id="Nome" name="Nome" type="text" value="@Model.Nome" required />
+            </div>
+            <div class="campo">
+                <label for="IdCategoria">Categoria</label>
+                <select id="IdCategoria" name="IdCategoria">
+                    @foreach (var c in categorias)
+                    {
+                        <option value="@c.Id" selected="@(c.Id == Model.IdCategoria)">@c.Nome</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="campo">
+            <label for="Descricao">Descrição</label>
+            <textarea id="Descricao" name="Descricao" rows="2">@Model.Descricao</textarea>
+        </div>
+        <div class="grade-form">
+            <div class="campo">
+                <label for="Preco">Preço (R$)</label>
+                <input id="Preco" name="Preco" type="text" inputmode="decimal" value="@(Model.Preco == 0 ? "" : Model.Preco.ToString("0.00"))" placeholder="42,90" required />
+            </div>
+            <div class="campo">
+                <label for="PontuacaoSca">Pontuação SCA</label>
+                <input id="PontuacaoSca" name="PontuacaoSca" type="text" inputmode="decimal" value="@Model.PontuacaoSca?.ToString("0.0")" aria-describedby="dica-sca" />
+                <span id="dica-sca" class="dica">Deixe vazio para acessórios e filtros.</span>
+            </div>
+            <div class="campo">
+                <label for="NotasSensoriais">Notas sensoriais</label>
+                <input id="NotasSensoriais" name="NotasSensoriais" type="text" value="@Model.NotasSensoriais" placeholder="Chocolate, caramelo" />
+            </div>
+        </div>
+        @if (Model.EhKit)
+        {
+            <input type="hidden" name="Quantidade" value="0" />
+            <input type="hidden" name="EstoqueMinimo" value="0" />
+            <p class="aviso sucesso" style="margin:0 0 16px">Este produto é um kit: a disponibilidade (@Model.Quantidade) é calculada pelos produtos que o compõem.
+                Para repor, dê entrada nos componentes.</p>
+        }
+        else
+        {
+        <div class="grade-form">
+                <div class="campo">
+                    <label for="Quantidade">Quantidade em estoque</label>
+                    <input id="Quantidade" name="Quantidade" type="number" min="0" value="@Model.Quantidade" required />
+                </div>
+                <div class="campo">
+                    <label for="EstoqueMinimo">Estoque mínimo</label>
+                    <input id="EstoqueMinimo" name="EstoqueMinimo" type="number" min="0" value="@Model.EstoqueMinimo" required aria-describedby="dica-min" />
+                    <span id="dica-min" class="dica">Abaixo disso o painel avisa que é hora de torrar.</span>
+                </div>
+            </div>
+        }
+        <label class="check">
+            <input type="checkbox" name="Ativo" value="true" checked="@Model.Ativo" />
+            Produto ativo (aparece no catálogo)
+        </label>
+        <input type="hidden" name="Ativo" value="false" />
+        @if (!novo)
+        {
+            <p class="dica muted">Alterações de preço ficam registradas na auditoria do banco (trigger TRG_AUDIT_PRECO_PRODUTO).</p>
+        }
+        <div style="display:flex;gap:12px">
+            <button class="botao" type="submit">Salvar produto</button>
+            <a class="botao secundario" asp-action="Produtos">Cancelar</a>
+        </div>
+    </form>
+</div>

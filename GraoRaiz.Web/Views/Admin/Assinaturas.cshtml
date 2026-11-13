@@ -1,0 +1,50 @@
+@model List<Assinatura>
+@{
+    ViewData["Title"] = "Assinaturas";
+    var paraHoje = Model.Count(a => a.Status == StatusAssinatura.Ativa && a.ProximaEntrega.Date <= DateTime.Today);
+}
+<div class="container">
+    <div class="cabecalho-pagina">
+        <h1>Assinaturas</h1>
+        <form asp-action="GerarEntregasDoDia" method="post">
+            <button class="botao" type="submit">Gerar entregas de hoje (@paraHoje)</button>
+        </form>
+    </div>
+    <partial name="_Menu" />
+    <p class="muted">Cada entrega gerada vira um pedido normal (com 10% de desconto), baixa o estoque e aparece no acompanhamento do cliente.</p>
+    @if (Model.Count == 0)
+    {
+        <p class="vazio">Nenhuma assinatura ainda. O cliente assina pela página do café ou pelo aplicativo.</p>
+    }
+    else
+    {
+        <div class="rolagem">
+            <table class="tabela">
+                <thead><tr><th>#</th><th>Cliente</th><th>Café</th><th>Frequência</th><th>Próxima entrega</th><th class="num">Valor</th><th>Situação</th><th><span class="pular">Ações</span></th></tr></thead>
+                <tbody>
+                    @foreach (var a in Model)
+                    {
+                        var vencida = a.Status == StatusAssinatura.Ativa && a.ProximaEntrega.Date <= DateTime.Today;
+                        <tr>
+                            <td>@a.Id</td>
+                            <td>@a.NomeCliente</td>
+                            <td>@a.Quantidade× @a.NomeProduto<br /><span class="muted">@a.MoagemDescricao</span></td>
+                            <td>a cada @a.FrequenciaDias dias</td>
+                            <td>@(a.Status == StatusAssinatura.Ativa ? a.ProximaEntrega.ToString("dd/MM/yyyy") : "—") @if (vencida) { <span class="selo baixo">hoje</span> }</td>
+                            <td class="num">@a.ValorPorEntrega.ToString("C")</td>
+                            <td><span class="selo @(a.Status == StatusAssinatura.Ativa ? "ok" : a.Status == StatusAssinatura.Pausada ? "baixo" : "inativo")">@StatusAssinatura.Descricao(a.Status)</span></td>
+                            <td>
+                                @if (a.Status == StatusAssinatura.Ativa)
+                                {
+                                    <form asp-action="GerarEntrega" asp-route-id="@a.Id" method="post">
+                                        <button class="botao secundario pequeno" type="submit">Gerar entrega agora</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

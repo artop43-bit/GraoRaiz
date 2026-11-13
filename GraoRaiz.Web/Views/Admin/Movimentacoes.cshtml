@@ -1,0 +1,51 @@
+@model MovimentacoesViewModel
+@{
+    ViewData["Title"] = "Movimentações de estoque";
+}
+<div class="container">
+    <h1>Movimentações de estoque</h1>
+    <partial name="_Menu" />
+    <form method="get" class="painel" style="display:flex;gap:16px;align-items:end;flex-wrap:wrap;margin-bottom:24px">
+        <div class="campo" style="margin:0;min-width:260px">
+            <label for="produto">Produto</label>
+            <select id="produto" name="produto" data-enviar-ao-mudar>
+                <option value="">Todos os produtos</option>
+                @foreach (var p in Model.Produtos)
+                {
+                    <option value="@p.Id" selected="@(p.Id == Model.ProdutoSelecionado)">@p.Nome</option>
+                }
+            </select>
+        </div>
+        <noscript><button class="botao" type="submit">Filtrar</button></noscript>
+        <span class="muted">Registradas automaticamente pela trigger TRG_ESTOQUE_POS_ATUALIZACAO a cada venda, cancelamento, entrada ou ajuste.</span>
+    </form>
+    @if (Model.Movimentacoes.Count == 0)
+    {
+        <p class="vazio">Nenhuma movimentação registrada.</p>
+    }
+    else
+    {
+        <div class="rolagem">
+            <table class="tabela">
+                <thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th class="num">Quantidade</th><th class="num">Saldo após</th><th>Origem</th></tr></thead>
+                <tbody>
+                    @foreach (var m in Model.Movimentacoes)
+                    {
+                        var entrada = m.Tipo is "ENTRADA" or "DEVOLUCAO";
+                        <tr>
+                            <td>@m.DataRegistro.ToString("dd/MM HH:mm:ss")</td>
+                            <td>@m.NomeProduto</td>
+                            <td><span class="mov @m.Tipo.ToLower()">@TiposMovimentacao.Descricao(m.Tipo)</span></td>
+                            <td class="num"><strong>@(m.Tipo == "AJUSTE" ? "±" : entrada ? "+" : "−")@m.Quantidade</strong></td>
+                            <td class="num">@m.SaldoApos</td>
+                            <td>
+                                @if (m.IdPedido is not null) { <a asp-action="Pedido" asp-route-id="@m.IdPedido">Pedido #@m.IdPedido</a> }
+                                @if (m.NomeUsuario is not null) { <span class="muted">@(m.IdPedido is null ? "" : " · ")@m.NomeUsuario</span> }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

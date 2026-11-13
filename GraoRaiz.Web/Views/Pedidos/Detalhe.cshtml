@@ -1,0 +1,72 @@
+@model Pedido
+@{
+    ViewData["Title"] = $"Pedido #{Model.Id}";
+    var cultura = new System.Globalization.CultureInfo("pt-BR");
+}
+<div class="container">
+    <p><a asp-action="Index">Voltar para meus pedidos</a></p>
+    <div class="cabecalho-pagina">
+        <div>
+            <h1>Pedido #@Model.Id <partial name="_Status" model="Model.Status" /></h1>
+            <p class="muted">Feito em @Model.DataPedido.ToString("dd/MM/yyyy 'às' HH:mm")
+                @if (Model.IdAssinatura is not null) { <text>· entrega do Clube de assinatura</text> }</p>
+        </div>
+        <div class="acoes-pedido">
+            <form asp-action="ComprarNovamente" asp-route-id="@Model.Id" method="post">
+                <button class="botao secundario" type="submit">Comprar novamente</button>
+            </form>
+            @if (Model.PodeCancelar)
+            {
+                <form asp-action="Cancelar" asp-route-id="@Model.Id" method="post"
+                      data-confirmar="Cancelar o pedido #@Model.Id? O valor do PIX é devolvido e os Grãos usados voltam para a sua conta.">
+                    <button class="botao secundario perigo" type="submit">Cancelar pedido</button>
+                </form>
+            }
+        </div>
+    </div>
+
+    @if (Model.PrevisaoEntrega is not null && Model.Status is not (StatusPedido.Entregue or StatusPedido.Cancelado))
+    {
+        <p class="previsao-destaque">Previsão de entrega: <strong>até @Model.PrevisaoEntrega.Value.ToString("dddd, dd 'de' MMMM", cultura)</strong></p>
+    }
+
+    <div class="duas-colunas">
+        <section class="painel">
+            <h2>Itens</h2>
+            <div class="rolagem">
+                <table class="tabela">
+                    <thead><tr><th>Produto</th><th>Moagem</th><th class="num">Qtd.</th><th class="num">Subtotal</th><th><span class="pular">Avaliar</span></th></tr></thead>
+                    <tbody>
+                        @foreach (var i in Model.Itens)
+                        {
+                            <tr>
+                                <td>@i.NomeProduto</td><td>@i.MoagemDescricao</td><td class="num">@i.Quantidade</td><td class="num">@i.Subtotal.ToString("C")</td>
+                                <td>
+                                    @if (Model.Status == StatusPedido.Entregue)
+                                    {
+                                        <a class="botao secundario pequeno" asp-controller="Catalogo" asp-action="Produto" asp-route-id="@i.IdProduto" asp-fragment="avaliacoes">Avaliar</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="resumo" style="position:static;margin-top:16px">
+                <div class="linha"><span>Produtos</span><span>@Model.Subtotal.ToString("C")</span></div>
+                @if (Model.ValorDesconto > 0)
+                {
+                    <div class="linha desconto"><span>Descontos@(Model.CodigoCupom is null ? "" : $" (cupom {Model.CodigoCupom})")@(Model.PontosUsados > 0 ? $" ({Model.PontosUsados} Grãos)" : "")</span><span>− @Model.ValorDesconto.ToString("C")</span></div>
+                }
+                <div class="linha"><span>Frete</span><span>@(Model.ValorFrete == 0 ? "Grátis" : Model.ValorFrete.ToString("C"))</span></div>
+                <div class="linha total"><span>Total</span><span>@Model.ValorTotal.ToString("C")</span></div>
+            </div>
+            <h3 style="margin-top:24px">Entrega</h3>
+            <p>@Model.EnderecoResumo</p>
+        </section>
+        <aside class="painel">
+            <h2>Andamento</h2>
+            <partial name="_LinhaTempo" model="Model" />
+        </aside>
+    </div>
+</div>

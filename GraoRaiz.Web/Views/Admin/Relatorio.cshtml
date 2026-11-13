@@ -1,0 +1,47 @@
+@model RelatorioViewModel
+@{
+    ViewData["Title"] = "Relatório de vendas";
+    var maior = Model.Vendas.Count == 0 ? 1 : Model.Vendas.Max(v => v.Faturamento);
+    if (maior == 0) maior = 1;
+}
+<div class="container">
+    <h1>Relatório de vendas</h1>
+    <partial name="_Menu" />
+    <form method="get" class="painel" style="display:flex;gap:16px;align-items:end;flex-wrap:wrap;margin-bottom:24px">
+        <div class="campo" style="margin:0"><label for="inicio">De</label><input id="inicio" name="inicio" type="date" value="@Model.Inicio.ToString("yyyy-MM-dd")" /></div>
+        <div class="campo" style="margin:0"><label for="fim">Até</label><input id="fim" name="fim" type="date" value="@Model.Fim.ToString("yyyy-MM-dd")" /></div>
+        <button class="botao" type="submit">Gerar relatório</button>
+        <a class="botao secundario" asp-action="RelatorioCsv" asp-route-inicio="@Model.Inicio.ToString("yyyy-MM-dd")" asp-route-fim="@Model.Fim.ToString("yyyy-MM-dd")">Baixar para Excel (CSV)</a>
+        <span class="muted">Dados da procedure SP_RELATORIO_VENDAS_PERIODO</span>
+    </form>
+
+    <div class="indicadores" style="grid-template-columns:repeat(3,1fr)">
+        <div class="indicador"><strong>@Model.Total.ToString("C")</strong><span>faturamento em produtos</span></div>
+        <div class="indicador"><strong>@Model.Unidades</strong><span>unidades vendidas</span></div>
+        <div class="indicador"><strong>@Model.Vendas.Count</strong><span>produtos diferentes</span></div>
+    </div>
+
+    @if (Model.Vendas.Count == 0)
+    {
+        <p class="vazio">Nenhuma venda no período escolhido.</p>
+    }
+    else
+    {
+        <div class="rolagem">
+            <table class="tabela">
+                <thead><tr><th>Produto</th><th class="num">Unidades</th><th class="num">Faturamento</th><th style="width:30%"><span class="pular">Participação</span></th></tr></thead>
+                <tbody>
+                    @foreach (var v in Model.Vendas)
+                    {
+                        <tr>
+                            <td>@v.Produto</td>
+                            <td class="num">@v.UnidadesVendidas</td>
+                            <td class="num">@v.Faturamento.ToString("C")</td>
+                            <td><div class="barra-venda" style="width:@((int)(v.Faturamento / maior * 100))%"></div></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

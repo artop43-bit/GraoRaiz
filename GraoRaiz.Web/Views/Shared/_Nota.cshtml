@@ -1,0 +1,15 @@
+@model decimal
+@* Nota de 1 a 5 desenhada como grãos de café cheios ou vazios. *@
+@{
+    var cheios = (int)Math.Round(Model, MidpointRounding.AwayFromZero);
+}
+<span class="nota" role="img" aria-label="Nota @Model.ToString("0.0") de 5">
+    @for (var i = 1; i <= 5; i++)
+    {
+        <svg viewBox="0 0 20 24" width="14" height="17" aria-hidden="true" class="@(i <= cheios ? "cheio" : "vazio")">
+            <ellipse cx="10" cy="12" rx="7.5" ry="10.5" transform="rotate(18 10 12)" />
+            <path d="M8 3.5 C 13 9, 7 15, 12 20.5" fill="none" />
+        </svg>
+    }
+    <span class="nota-numero">@Model.ToString("0.0")</span>
+</span>

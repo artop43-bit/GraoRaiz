@@ -1,0 +1,75 @@
+@model Produto
+@*
+    Arte do produto desenhada em SVG: uma saca de café com etiqueta carimbada.
+    Cafés mostram o selo com a pontuação SCA; acessórios e filtros mostram um coador.
+*@
+@{
+    var (fundo, saca, tinta) = Model.IdCategoria switch
+    {
+        1 => ("#efe4d2", "#d9c19d", "#3b2418"),
+        2 => ("#e3ece7", "#cdb38a", "#1f5c4a"),
+        3 => ("#f3e6e2", "#e0cfb3", "#b3203a"),
+        _ => ("#ebe9ef", "#ddd3c2", "#4a4867")
+    };
+    var titulo = Model.Nome.Replace(" 250 g", "").Replace(" (100 un.)", "").Replace(" (30 un.)", "");
+    var palavras = titulo.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var linhas = new List<string>();
+    var atual = "";
+    foreach (var p in palavras)
+    {
+        if ((atual + " " + p).Trim().Length > 13 && atual.Length > 0) { linhas.Add(atual); atual = p; }
+        else atual = (atual + " " + p).Trim();
+    }
+    if (atual.Length > 0) linhas.Add(atual);
+    linhas = linhas.Take(3).ToList();
+    var descricaoArte = Model.PontuacaoSca is not null
+        ? $"Saca de café {titulo}, pontuação SCA {Model.PontuacaoSca:0.#}"
+        : Model.PermiteMoagem ? $"Ilustração do {titulo}"
+        : $"Ilustração de {titulo}";
+}
+<div class="saca">
+    <svg viewBox="0 0 400 340" role="img" aria-label="@descricaoArte">
+        <rect width="400" height="340" fill="@fundo" />
+        @if (Model.PermiteMoagem)
+        {
+          <g>
+            <!-- saca -->
+            <path d="M95 52 Q200 30 305 52 L320 300 Q200 318 80 300 Z" fill="@saca" />
+            <path d="M95 52 Q200 30 305 52 L300 78 Q200 62 100 78 Z" fill="@tinta" opacity=".18" />
+            <g stroke="@tinta" stroke-opacity=".12" stroke-width="2">
+                <line x1="110" y1="100" x2="290" y2="100" /><line x1="104" y1="130" x2="296" y2="130" />
+                <line x1="100" y1="250" x2="300" y2="250" /><line x1="98" y1="278" x2="302" y2="278" />
+            </g>
+            <!-- etiqueta carimbada -->
+            <rect x="122" y="110" width="156" height="128" rx="6" fill="#fbf7ef" stroke="@tinta" stroke-width="3" />
+            <text x="200" y="134" text-anchor="middle" font-family="Zilla Slab, Rockwell, serif" font-size="13" fill="@tinta">@Model.NomeCategoria</text>
+            @for (var i = 0; i < linhas.Count; i++)
+            {
+                <g><text x="200" y="@(162 + i * 24)" text-anchor="middle" font-family="Zilla Slab, Rockwell, serif" font-weight="700" font-size="22" fill="@tinta">@linhas[i]</text></g>
+            }
+            <!-- selo SCA (só cafés com pontuação) -->
+            @if (Model.PontuacaoSca is not null)
+            {
+            <g transform="translate(292 228) rotate(-12)">
+                <circle r="38" fill="@tinta" />
+                <circle r="31" fill="none" stroke="#fbf7ef" stroke-width="1.5" stroke-dasharray="3 3" />
+                <text y="2" text-anchor="middle" font-family="Zilla Slab, Rockwell, serif" font-weight="700" font-size="22" fill="#fbf7ef">@Model.PontuacaoSca?.ToString("0.#")</text>
+                <text y="17" text-anchor="middle" font-family="Figtree, sans-serif" font-size="8.5" fill="#fbf7ef">pontos SCA</text>
+            </g>
+            }
+          </g>
+        }
+        else
+        {
+          <g>
+            <!-- coador / filtro -->
+            <path d="M130 90 L270 90 L225 210 L175 210 Z" fill="#fbf7ef" stroke="@tinta" stroke-width="4" stroke-linejoin="round" />
+            <path d="M120 90 L280 90" stroke="@tinta" stroke-width="8" stroke-linecap="round" />
+            <rect x="160" y="210" width="80" height="16" rx="4" fill="@tinta" />
+            <path d="M150 238 Q200 226 250 238 L242 284 Q200 296 158 284 Z" fill="@saca" stroke="@tinta" stroke-width="3" />
+            <g stroke="@tinta" stroke-opacity=".35" stroke-width="2"><line x1="160" y1="120" x2="240" y2="120" /><line x1="170" y1="150" x2="230" y2="150" /></g>
+            <text x="200" y="320" text-anchor="middle" font-family="Zilla Slab, Rockwell, serif" font-weight="700" font-size="20" fill="@tinta">@Model.NomeCategoria</text>
+          </g>
+        }
+    </svg>
+</div>

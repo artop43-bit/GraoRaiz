@@ -1,0 +1,122 @@
+@inject CarrinhoSessao Carrinho
+@inject IClienteService Clientes
+@{
+    var controlador = ViewContext.RouteData.Values["controller"]?.ToString();
+    var acao = ViewContext.RouteData.Values["action"]?.ToString();
+    string? Atual(string c, string? a = null) => controlador == c && (a is null || acao == a) ? "page" : null;
+    var logado = User.Identity?.IsAuthenticated == true;
+    var admin = User.IsInRole(PerfisAcesso.Administrador);
+    var cliente = logado && !admin;
+    var itensCarrinho = admin ? 0 : Carrinho.TotalItens();
+    var naoLidas = 0;
+    if (cliente)
+    {
+        try { naoLidas = await Clientes.NaoLidasAsync(User.IdUsuario()); } catch { /* banco indisponível */ }
+    }
+}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] is string t ? t + " | " : "")Grão Raiz Cafés Especiais</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Zilla+Slab:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="@(admin ? "perfil-admin" : "")">
+    <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+    <header class="topo">
+        <div class="container">
+            <a class="marca" asp-controller="@(admin ? "Admin" : "Home")" asp-action="Index" aria-label="Grão Raiz, página inicial">
+                <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+                    <ellipse cx="16" cy="16" rx="11" ry="14" fill="#e7d6bb" transform="rotate(25 16 16)" />
+                    <path d="M12 5 C 20 12, 12 20, 20 27" stroke="#3b2418" stroke-width="2.4" fill="none" stroke-linecap="round" />
+                </svg>
+                <strong>Grão Raiz</strong>
+                @if (admin)
+                {
+                    <span class="etiqueta-admin">Torrefação</span>
+                }
+            </a>
+            <nav class="menu" aria-label="Menu principal">
+                @if (admin)
+                {
+                    @* O administrador tem uma navegação própria: painel e loja apenas para consulta. *@
+                    <a asp-controller="Admin" asp-action="Index" aria-current="@Atual("Admin")">Painel</a>
+                    <a asp-controller="Catalogo" asp-action="Index" aria-current="@Atual("Catalogo")">Ver a loja</a>
+                }
+                else
+                {
+                    <a asp-controller="Catalogo" asp-action="Index" aria-current="@Atual("Catalogo")">Catálogo</a>
+                    <a asp-controller="Assinaturas" asp-action="Index" aria-current="@Atual("Assinaturas")">Clube</a>
+                    <a asp-controller="Raizes" asp-action="Index" aria-current="@Atual("Raizes")">Raízes do Café</a>
+                    @if (cliente)
+                    {
+                        <a asp-controller="Pedidos" asp-action="Index" aria-current="@Atual("Pedidos")">Meus pedidos</a>
+                    }
+                }
+                <div class="direita">
+                    @if (cliente)
+                    {
+                        <a class="sino" asp-controller="Notificacoes" asp-action="Index" aria-current="@Atual("Notificacoes")"
+                           data-sino="@Url.Action("Contagem", "Notificacoes")" aria-label="Notificações">
+                            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                            </svg>
+                            <span class="contador" data-contador hidden="@(naoLidas == 0)">@naoLidas</span>
+                        </a>
+                        <a asp-controller="Conta" asp-action="Minha" aria-current="@Atual("Conta", "Minha")">Minha conta</a>
+                    }
+                    @if (!admin)
+                    {
+                        <a asp-controller="Carrinho" asp-action="Index" aria-current="@Atual("Carrinho")">
+                            Carrinho
+                            @if (itensCarrinho > 0)
+                            {
+                                <span class="contador" aria-label="@itensCarrinho itens">@itensCarrinho</span>
+                            }
+                        </a>
+                    }
+                    @if (logado)
+                    {
+                        <form asp-controller="Conta" asp-action="Sair" method="post">
+                            <button type="submit" title="Sair da conta de @User.Identity!.Name">Sair</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-controller="Conta" asp-action="Login" aria-current="@Atual("Conta")">Entrar</a>
+                    }
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container" role="status" aria-live="polite">
+        @if (TempData["Sucesso"] is string sucesso)
+        {
+            <p class="aviso sucesso">@sucesso</p>
+        }
+        @if (TempData["Erro"] is string erro)
+        {
+            <p class="aviso erro">@erro</p>
+        }
+    </div>
+
+    <main id="conteudo">
+        @RenderBody()
+    </main>
+
+    <footer class="rodape-site">
+        <div class="container">
+            <p>Grão Raiz Cafés Especiais · Torrefação artesanal em Santos/SP</p>
+            <p>Projeto acadêmico PIM IV · UNIP · <a asp-controller="Raizes" asp-action="Index">Conheça nossos produtores</a></p>
+        </div>
+    </footer>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

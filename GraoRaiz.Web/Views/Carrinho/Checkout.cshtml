@@ -1,0 +1,113 @@
+@model CheckoutViewModel
+@{
+    ViewData["Title"] = "Entrega e pagamento";
+    var r = Model.Resumo;
+    var cultura = new System.Globalization.CultureInfo("pt-BR");
+    string Prev(DateTime d) => d.ToString("ddd, dd/MM", cultura);
+}
+<div class="container">
+    <ol class="etapas" aria-label="Etapas da compra">
+        <li class="feita">Carrinho</li>
+        <li class="atual" aria-current="step">Entrega e pagamento</li>
+        <li>Confirmação</li>
+    </ol>
+    <h1>Entrega e pagamento</h1>
+    <div class="duas-colunas">
+        <div>
+            <section class="painel">
+                <h2>Endereço de entrega</h2>
+                @if (Model.Enderecos.Count == 0)
+                {
+                    <p class="muted">Cadastre um endereço para ver o frete e o prazo de entrega.</p>
+                }
+                <form id="form-finalizar" asp-action="Finalizar" method="post">
+                    <input type="hidden" name="usarGraos" value="@(Model.UsarGraos ? "true" : "false")" />
+                    @foreach (var e in Model.Enderecos)
+                    {
+                        var re = Model.ResumoPorEndereco.GetValueOrDefault(e.Id);
+                        <label class="endereco">
+                            <input type="radio" name="idEndereco" value="@e.Id" checked="@(e.Id == Model.IdEnderecoSelecionado)" required
+                                   data-frete="@(re is null ? "" : re.Frete == 0 ? "Grátis" : re.Frete.ToString("C"))"
+                                   data-prazo="@(re is null ? "" : $"{re.PrazoDias} dias úteis · chega até {Prev(re.PrevisaoEntrega)}")"
+                                   data-total="@re?.Total.ToString("C")" />
+                            <span>
+                                @e.Resumo<br />
+                                <span class="muted">CEP @e.CepFormatado
+                                    @if (re is not null) { <text>· @(re.Frete == 0 ? "frete grátis" : re.Frete.ToString("C")) · @re.PrazoDias dias úteis</text> }
+                                </span>
+                            </span>
+                        </label>
+                    }
+                </form>
+
+                <details class="novo" open="@(Model.Enderecos.Count == 0)">
+                    <summary>Cadastrar novo endereço</summary>
+                    <partial name="_FormEndereco" model="@("Carrinho")" />
+                </details>
+            </section>
+
+            <section class="painel" style="margin-top:24px">
+                <h2>Descontos</h2>
+                <form class="cupom" asp-action="AplicarCupom" method="post">
+                    <input type="hidden" name="voltarPara" value="checkout" />
+                    <label for="cupom">Cupom</label>
+                    <div class="linha-campo">
+                        <input id="cupom" name="cupom" type="text" value="@Model.Cupom" placeholder="Ex.: PIM2026" autocomplete="off" style="text-transform:uppercase" />
+                        <button class="botao secundario pequeno" type="submit">Aplicar</button>
+                    </div>
+                </form>
+                @if (r.MensagemCupom is not null)
+                {
+                    <p class="@(r.CupomAplicado is null ? "aviso erro" : "selo ok")" style="margin:8px 0 0">@r.MensagemCupom</p>
+                }
+
+                <form method="get" asp-action="Checkout" class="graos-opcao" id="form-graos">
+                    <input type="hidden" name="endereco" value="@Model.IdEnderecoSelecionado" data-endereco-atual />
+                    <label class="check" style="margin:16px 0 0">
+                        <input type="checkbox" name="usarGraos" value="true" checked="@Model.UsarGraos" data-enviar-ao-mudar
+                               disabled="@(r.SaldoGraos < Fidelidade.GraosPorResgate)" />
+                        <span>
+                            <strong>Usar meus Grãos</strong>
+                            @if (r.SaldoGraos >= Fidelidade.GraosPorResgate)
+                            {
+                                <span class="muted">· você tem @r.SaldoGraos grãos (vale até @Fidelidade.ValorEmReais(r.SaldoGraos).ToString("C"))</span>
+                            }
+                            else
+                            {
+                                <span class="muted">· você tem @r.SaldoGraos grãos. Com 100 grãos você ganha R$ 10,00 de desconto.</span>
+                            }
+                        </span>
+                    </label>
+                    <noscript><button class="botao secundario pequeno" type="submit">Atualizar</button></noscript>
+                </form>
+            </section>
+
+            <section class="painel" style="margin-top:24px">
+                <h2>Pagamento</h2>
+                <p style="margin:0">PIX instantâneo. Nesta demonstração o pagamento é simulado e aprovado assim que você confirma a compra.</p>
+            </section>
+        </div>
+
+        <aside class="painel resumo" aria-label="Resumo do pedido">
+            <h2>Seu pedido</h2>
+            @foreach (var item in Model.Itens)
+            {
+                <div class="linha"><span>@item.Quantidade× @item.Nome<br /><small class="muted">@item.MoagemDescricao</small></span><span>@item.Subtotal.ToString("C")</span></div>
+            }
+            @if (r.DescontoCupom > 0)
+            {
+                <div class="linha desconto"><span>Cupom @r.CupomAplicado</span><span>− @r.DescontoCupom.ToString("C")</span></div>
+            }
+            @if (r.DescontoGraos > 0)
+            {
+                <div class="linha desconto"><span>@r.GraosUsados Grãos</span><span>− @r.DescontoGraos.ToString("C")</span></div>
+            }
+            <div class="linha"><span>Frete</span><span data-campo="frete">@(r.Frete == 0 ? "Grátis" : r.Frete.ToString("C"))</span></div>
+            <div class="linha total"><span>Total</span><span data-campo="total">@r.Total.ToString("C")</span></div>
+            <p class="muted prazo" data-campo="prazo">@r.PrazoDias dias úteis · chega até @Prev(r.PrevisaoEntrega)</p>
+            <p class="ganho-graos">Você vai ganhar <strong>@r.GraosQueVaiGanhar Grãos</strong> com esta compra.</p>
+            <button class="botao cereja largo" style="margin-top:8px" type="submit" form="form-finalizar"
+                    disabled="@(Model.Enderecos.Count == 0)">Pagar com PIX e finalizar</button>
+        </aside>
+    </div>
+</div>

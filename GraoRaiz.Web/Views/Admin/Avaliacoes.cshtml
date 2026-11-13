@@ -1,0 +1,39 @@
+@model List<Avaliacao>
+@{
+    ViewData["Title"] = "Avaliações";
+}
+<div class="container">
+    <h1>Avaliações dos clientes</h1>
+    <partial name="_Menu" />
+    <p class="muted">Só quem recebeu o produto pode avaliar. Oculte comentários inadequados: eles saem da loja, mas continuam registrados.</p>
+    @if (Model.Count == 0)
+    {
+        <p class="vazio">Nenhuma avaliação ainda. Marque um pedido como "Entregue" para o cliente poder avaliar.</p>
+    }
+    else
+    {
+        <div class="rolagem">
+            <table class="tabela">
+                <thead><tr><th>Produto</th><th>Cliente</th><th>Nota</th><th>Comentário</th><th>Data</th><th><span class="pular">Ações</span></th></tr></thead>
+                <tbody>
+                    @foreach (var a in Model)
+                    {
+                        <tr class="@(a.Visivel ? "" : "oculta")">
+                            <td>@a.NomeProduto</td>
+                            <td>@a.NomeCliente</td>
+                            <td><partial name="_Nota" model="(decimal)a.Nota" /></td>
+                            <td>@(a.Comentario ?? "—")</td>
+                            <td>@a.DataRegistro.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <form asp-action="AlternarAvaliacao" asp-route-id="@a.Id" method="post">
+                                    <input type="hidden" name="visivel" value="@(a.Visivel ? "false" : "true")" />
+                                    <button class="botao secundario pequeno" type="submit">@(a.Visivel ? "Ocultar" : "Publicar")</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

@@ -1,0 +1,79 @@
+@model MinhaContaViewModel
+@{
+    ViewData["Title"] = "Minha conta";
+    ViewData["Favoritos"] = Model.Favoritos.Select(p => p.Id).ToHashSet();
+    var g = Model.Graos;
+    var progresso = (int)Math.Round((Fidelidade.GraosPorResgate - g.FaltamParaProximoResgate) * 100.0 / Fidelidade.GraosPorResgate);
+}
+<div class="container">
+    <div class="cabecalho-pagina">
+        <div>
+            <h1>Minha conta</h1>
+            <p class="muted">@Model.Nome · @Model.Email</p>
+        </div>
+        <nav class="filtros" aria-label="Seções da conta" style="margin:0">
+            <a class="filtro" href="#graos">Grãos</a>
+            <a class="filtro" href="#favoritos">Favoritos</a>
+            <a class="filtro" href="#assinaturas">Assinaturas</a>
+            <a class="filtro" href="#enderecos">Endereços</a>
+        </nav>
+    </div>
+
+    <section id="graos" class="painel cartao-graos">
+        <div>
+            <span class="rotulo">Programa de fidelidade</span>
+            <h2>@g.Saldo Grãos</h2>
+            <p>Valem <strong>@g.ValorEmReais.ToString("C")</strong> de desconto. Cada R$ 1,00 em compras vira 1 grão; a cada 100 grãos você ganha R$ 10,00.</p>
+            <div class="barra-progresso" aria-label="Faltam @g.FaltamParaProximoResgate grãos para o próximo resgate"><span style="width:@progresso%"></span></div>
+            <small>Faltam @g.FaltamParaProximoResgate grãos para mais R$ 10,00. Use no checkout marcando "Usar meus Grãos".</small>
+        </div>
+        @if (g.Extrato.Count > 0)
+        {
+            <ul class="extrato">
+                @foreach (var m in g.Extrato.Take(6))
+                {
+                    <li><span>@m.Descricao<br /><small class="muted">@m.DataRegistro.ToString("dd/MM/yyyy")</small></span>
+                        <strong class="@(m.Pontos >= 0 ? "positivo" : "negativo")">@(m.Pontos >= 0 ? "+" : "")@m.Pontos</strong></li>
+                }
+            </ul>
+        }
+    </section>
+
+    <section id="favoritos" style="margin-top:40px">
+        <h2>Favoritos</h2>
+        @if (Model.Favoritos.Count == 0)
+        {
+            <p class="vazio">Toque no coração de um café para guardá-lo aqui.</p>
+        }
+        else
+        {
+            <div class="grade-produtos">
+                @foreach (var p in Model.Favoritos) { <partial name="_CartaoProduto" model="p" /> }
+            </div>
+        }
+    </section>
+
+    <section id="assinaturas" style="margin-top:40px">
+        <div class="cabecalho-pagina"><h2>Assinaturas</h2><a asp-controller="Assinaturas" asp-action="Index">Gerenciar no Clube</a></div>
+        @if (Model.Assinaturas.Count == 0)
+        {
+            <p class="vazio">Você ainda não assina nenhum café. <a asp-controller="Assinaturas" asp-action="Index">Conheça o Clube</a> e ganhe 10% em toda entrega.</p>
+        }
+        else
+        {
+            <partial name="_ListaAssinaturas" model="Model.Assinaturas" />
+        }
+    </section>
+
+    <section id="enderecos" class="painel" style="margin-top:40px">
+        <h2>Endereços</h2>
+        @foreach (var e in Model.Enderecos)
+        {
+            <p class="endereco-salvo">@e.Resumo<br /><span class="muted">CEP @e.CepFormatado</span></p>
+        }
+        <details class="novo" open="@(Model.Enderecos.Count == 0)">
+            <summary>Cadastrar novo endereço</summary>
+            <partial name="_FormEndereco" model="@("Conta")" />
+        </details>
+    </section>
+</div>

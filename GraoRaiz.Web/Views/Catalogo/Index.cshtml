@@ -1,0 +1,104 @@
+@model CatalogoViewModel
+@{
+    ViewData["Title"] = "Catálogo";
+    ViewData["Favoritos"] = Model.Favoritos;
+    ViewData["MetodoSelecionado"] = Model.MetodoSelecionado;
+    // Monta o link mantendo os filtros atuais e trocando só o que foi pedido.
+    string Link(int? categoria = -1, int? metodo = -1, string? ordem = null, int pagina = 1) => Url.Action("Index", new
+    {
+        categoria = categoria == -1 ? Model.CategoriaSelecionada : categoria,
+        metodo = metodo == -1 ? Model.MetodoSelecionado : metodo,
+        busca = Model.Busca,
+        ordem = (ordem ?? Model.Ordem) == OrdensCatalogo.Relevancia ? null : ordem ?? Model.Ordem,
+        pagina = pagina == 1 ? (int?)null : pagina
+    })!;
+}
+<div class="container">
+    <div class="cabecalho-pagina">
+        <div>
+            <h1>Catálogo</h1>
+            <p class="muted">@Model.Total produto(s) @(Model.Busca is null ? "" : $"para \"{Model.Busca}\"")</p>
+        </div>
+        <form class="busca" method="get" role="search">
+            @if (Model.CategoriaSelecionada is not null) { <input type="hidden" name="categoria" value="@Model.CategoriaSelecionada" /> }
+            @if (Model.MetodoSelecionado is not null) { <input type="hidden" name="metodo" value="@Model.MetodoSelecionado" /> }
+            <label for="busca" class="pular">Buscar por nome ou nota sensorial</label>
+            <input id="busca" type="text" name="busca" value="@Model.Busca" placeholder="Buscar: chocolate, floral, Mogiana..." />
+            <button class="botao" type="submit">Buscar</button>
+        </form>
+    </div>
+
+    <nav class="filtros" aria-label="Categorias">
+        <a class="filtro" href="@Link(categoria: null)" aria-current="@(Model.CategoriaSelecionada is null ? "true" : null)">Todos</a>
+        @foreach (var c in Model.Categorias)
+        {
+            <a class="filtro" href="@Link(categoria: c.Id)" aria-current="@(Model.CategoriaSelecionada == c.Id ? "true" : null)">@c.Nome</a>
+        }
+    </nav>
+
+    <div class="barra-catalogo">
+        <nav class="filtros metodos" aria-label="Como você prepara o café?">
+            <span class="rotulo-filtro">Como você prepara?</span>
+            @foreach (var m in Model.Metodos)
+            {
+                var ativo = Model.MetodoSelecionado == m.Id;
+                <a class="filtro" href="@Link(metodo: ativo ? null : m.Id)" aria-current="@(ativo ? "true" : null)">@m.Nome</a>
+            }
+        </nav>
+        <form method="get" class="ordenar">
+            @if (Model.CategoriaSelecionada is not null) { <input type="hidden" name="categoria" value="@Model.CategoriaSelecionada" /> }
+            @if (Model.MetodoSelecionado is not null) { <input type="hidden" name="metodo" value="@Model.MetodoSelecionado" /> }
+            @if (Model.Busca is not null) { <input type="hidden" name="busca" value="@Model.Busca" /> }
+            <label for="ordem">Ordenar por</label>
+            <select id="ordem" name="ordem" data-enviar-ao-mudar>
+                @foreach (var (valor, nome) in OrdensCatalogo.Todas)
+                {
+                    <option value="@valor" selected="@(valor == Model.Ordem)">@nome</option>
+                }
+            </select>
+            <noscript><button class="botao pequeno" type="submit">Aplicar</button></noscript>
+        </form>
+    </div>
+
+    @if (Model.Metodo is not null)
+    {
+        <p class="dica-metodo"><strong>@Model.Metodo.Nome:</strong> @Model.Metodo.Descricao
+            Ao abrir um café, a opção <strong>@TiposMoagem.Descricao(Model.Metodo.MoagemRecomendada).ToLower()</strong> já vem marcada.</p>
+    }
+
+    @if (Model.Produtos.Count == 0)
+    {
+        <div class="vazio">
+            <h2>Nenhum produto encontrado</h2>
+            <p>Tente outra palavra, outro método de preparo ou veja todas as categorias.</p>
+            <a class="botao secundario" asp-action="Index">Limpar filtros</a>
+        </div>
+    }
+    else
+    {
+        <div class="grade-produtos">
+            @foreach (var p in Model.Produtos)
+            {
+                <partial name="_CartaoProduto" model="p" />
+            }
+        </div>
+
+        @if (Model.TotalPaginas > 1)
+        {
+            <nav class="paginacao" aria-label="Páginas do catálogo">
+                @if (Model.Pagina > 1)
+                {
+                    <a class="filtro" href="@Link(pagina: Model.Pagina - 1)" rel="prev">Anterior</a>
+                }
+                @for (var i = 1; i <= Model.TotalPaginas; i++)
+                {
+                    <a class="filtro" href="@Link(pagina: i)" aria-current="@(i == Model.Pagina ? "true" : null)" aria-label="Página @i">@i</a>
+                }
+                @if (Model.Pagina < Model.TotalPaginas)
+                {
+                    <a class="filtro" href="@Link(pagina: Model.Pagina + 1)" rel="next">Próxima</a>
+                }
+            </nav>
+        }
+    }
+</div>

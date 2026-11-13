@@ -1,0 +1,52 @@
+@model AssinaturasViewModel
+@{
+    ViewData["Title"] = "Clube de assinatura";
+}
+<div class="container">
+    <section class="clube-topo">
+        <div>
+            <span class="rotulo">Clube Grão Raiz</span>
+            <h1>Café fresco na sua porta, sem precisar lembrar.</h1>
+            <p>Escolha o café, a moagem e a frequência. Cada entrega sai com <strong>10% de desconto</strong>
+                e você pode pausar ou cancelar quando quiser.</p>
+        </div>
+        <ol class="passos-clube">
+            <li><strong>Escolha o café</strong><span>Qualquer café do catálogo.</span></li>
+            <li><strong>Defina a rotina</strong><span>A cada 15 ou 30 dias, de 1 a 5 pacotes.</span></li>
+            <li><strong>Receba e aproveite</strong><span>A primeira entrega sai na hora.</span></li>
+        </ol>
+    </section>
+
+    @if (Model.Logado)
+    {
+        <section style="margin-bottom:40px">
+            <h2>Minhas assinaturas</h2>
+            @if (Model.Minhas.Count == 0)
+            {
+                <p class="vazio">Você ainda não tem assinaturas. Escolha um café abaixo.</p>
+            }
+            else
+            {
+                <partial name="_ListaAssinaturas" model="Model.Minhas" />
+            }
+        </section>
+    }
+
+    <h2>Escolha o seu café</h2>
+    <div class="grade-produtos">
+        @foreach (var p in Model.Cafes)
+        {
+            <article class="produto">
+                <partial name="_Saca" model="p" />
+                <div class="corpo">
+                    <h3><a asp-controller="Catalogo" asp-action="Produto" asp-route-id="@p.Id" asp-fragment="assinar">@p.Nome</a></h3>
+                    <p class="notas">@(p.NotasSensoriais is null ? p.Descricao : "Notas de " + p.NotasSensoriais.ToLower())</p>
+                </div>
+                <div class="rodape">
+                    <span><s class="muted">@p.Preco.ToString("C")</s> <span class="preco">@((p.Preco * (1 - Assinaturas.Desconto)).ToString("C"))</span></span>
+                    <span class="selo ok">Assinar</span>
+                </div>
+            </article>
+        }
+    </div>
+</div>

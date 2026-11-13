@@ -1,0 +1,64 @@
+@model ResultadoCompra
+@{
+    ViewData["Title"] = "Compra confirmada";
+    var cultura = new System.Globalization.CultureInfo("pt-BR");
+}
+<div class="estreito">
+    <section class="comemoracao">
+        <svg class="xicara" viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M34 14 q6 8 0 16 M48 10 q6 8 0 16 M62 14 q6 8 0 16" stroke="#6b5244" stroke-width="3" fill="none" stroke-linecap="round" />
+            <path d="M16 38 h58 v16 a29 29 0 0 1 -58 0 z" fill="#1f5c4a" />
+            <path d="M74 44 h6 a10 10 0 0 1 0 20 h-8" stroke="#1f5c4a" stroke-width="5" fill="none" />
+            <rect x="10" y="80" width="70" height="6" rx="3" fill="#3b2418" />
+        </svg>
+        <h1>Compra confirmada!</h1>
+        <p class="muted">Pedido #@Model.IdPedido · total de @Model.ValorTotal.ToString("C")</p>
+        <span class="pix">PIX aprovado</span>
+        @if (Model.GraosGanhos > 0)
+        {
+            <p class="ganho-graos" style="margin:-8px 0 16px">Você ganhou <strong>@Model.GraosGanhos Grãos</strong> no programa de fidelidade.</p>
+        }
+    </section>
+
+    <section class="painel entrega">
+        <h2>Seu café já está a caminho</h2>
+        <p>Recebemos o seu pedido e a torrefação já começou a prepará-lo. Em breve ele será entregue no endereço abaixo.</p>
+
+        <div class="entrega-info">
+            <div>
+                <span class="rotulo">Entregar em</span>
+                <strong>@Model.EnderecoEntrega</strong>
+                <span class="muted">CEP @Model.CepEntrega</span>
+            </div>
+            <div>
+                <span class="rotulo">Previsão de entrega</span>
+                <strong>até @Model.PrevisaoEntrega.ToString("dddd, dd 'de' MMMM", cultura)</strong>
+                <span class="muted">@(Model.ValorFrete == 0 ? "Frete grátis" : "Frete de " + Model.ValorFrete.ToString("C"))@(Model.ValorDesconto > 0 ? " · você economizou " + Model.ValorDesconto.ToString("C") : "")</span>
+            </div>
+        </div>
+
+        <h3>Itens do pedido</h3>
+        <ul class="itens-comprados">
+            @foreach (var i in Model.Itens)
+            {
+                <li>
+                    <span>@i.Quantidade× @i.Produto</span>
+                    @if (!string.IsNullOrEmpty(i.Moagem))
+                    {
+                        <span class="muted">@i.Moagem</span>
+                    }
+                </li>
+            }
+        </ul>
+        <p class="muted">Você pode acompanhar cada etapa (separação, envio e entrega) na página do pedido.</p>
+    </section>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px">
+        <a class="botao" asp-controller="Pedidos" asp-action="Detalhe" asp-route-id="@Model.IdPedido">Acompanhar pedido</a>
+        <a class="botao secundario" asp-controller="Catalogo" asp-action="Index">Continuar comprando</a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>comemorarCompra();</script>
+}

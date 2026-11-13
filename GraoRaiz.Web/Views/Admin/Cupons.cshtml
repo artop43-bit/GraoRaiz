@@ -1,0 +1,56 @@
+@model List<Cupom>
+@{
+    ViewData["Title"] = "Cupons";
+}
+<div class="container">
+    <h1>Cupons de desconto</h1>
+    <partial name="_Menu" />
+    <div class="duas-colunas">
+        <div class="rolagem">
+            <table class="tabela">
+                <thead><tr><th>Código</th><th>Desconto</th><th>Regras</th><th class="num">Usos</th><th>Situação</th><th><span class="pular">Ações</span></th></tr></thead>
+                <tbody>
+                    @foreach (var c in Model)
+                    {
+                        var expirado = c.Validade is not null && c.Validade.Value.Date < DateTime.Today;
+                        <tr>
+                            <td><strong>@c.Codigo</strong><br /><span class="muted">@c.Descricao</span></td>
+                            <td>@c.ValorDescricao</td>
+                            <td class="muted">@(c.ValorMinimo > 0 ? $"mín. {c.ValorMinimo:C}" : "sem mínimo")<br />@(c.Validade is null ? "sem validade" : $"até {c.Validade:dd/MM/yyyy}")</td>
+                            <td class="num">@c.Usos@(c.LimiteUsos is null ? "" : $" / {c.LimiteUsos}")</td>
+                            <td>
+                                @if (!c.Ativo) { <span class="selo inativo">Desativado</span> }
+                                else if (expirado) { <span class="selo esgotado">Expirado</span> }
+                                else { <span class="selo ok">Ativo</span> }
+                            </td>
+                            <td>
+                                <form asp-action="AlternarCupom" asp-route-id="@c.Id" method="post">
+                                    <input type="hidden" name="ativo" value="@(c.Ativo ? "false" : "true")" />
+                                    <button class="botao secundario pequeno" type="submit">@(c.Ativo ? "Desativar" : "Reativar")</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <form class="painel" asp-action="CriarCupom" method="post">
+            <h2>Novo cupom</h2>
+            <div class="campo"><label for="Codigo">Código</label><input id="Codigo" name="Codigo" type="text" required maxlength="30" placeholder="NATAL15" style="text-transform:uppercase" /></div>
+            <div class="campo"><label for="Descricao">Descrição para o cliente</label><input id="Descricao" name="Descricao" type="text" required maxlength="120" placeholder="15% de desconto no Natal" /></div>
+            <div class="grade-form">
+                <div class="campo">
+                    <label for="Tipo">Tipo</label>
+                    <select id="Tipo" name="Tipo"><option value="@TiposCupom.Percentual">Percentual (%)</option><option value="@TiposCupom.Valor">Valor fixo (R$)</option></select>
+                </div>
+                <div class="campo"><label for="Valor">Desconto</label><input id="Valor" name="Valor" type="text" inputmode="decimal" required placeholder="15" /></div>
+            </div>
+            <div class="grade-form">
+                <div class="campo"><label for="ValorMinimo">Compra mínima (R$)</label><input id="ValorMinimo" name="ValorMinimo" type="text" inputmode="decimal" value="0" /></div>
+                <div class="campo"><label for="LimiteUsos">Limite de usos</label><input id="LimiteUsos" name="LimiteUsos" type="number" min="1" placeholder="sem limite" /></div>
+            </div>
+            <div class="campo"><label for="Validade">Válido até (opcional)</label><input id="Validade" name="Validade" type="date" /></div>
+            <button class="botao largo" type="submit">Criar cupom</button>
+        </form>
+    </div>
+</div>

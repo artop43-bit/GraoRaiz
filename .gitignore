@@ -1,0 +1,13 @@
+# .NET
+bin/
+obj/
+.vs/
+*.user
+# Flutter
+graoraiz_app/.dart_tool/
+graoraiz_app/build/
+graoraiz_app/.flutter-plugins
+graoraiz_app/.flutter-plugins-dependencies
+graoraiz_app/pubspec.lock
+# Chave secreta gerada na primeira execução
+jwt-chave.txt

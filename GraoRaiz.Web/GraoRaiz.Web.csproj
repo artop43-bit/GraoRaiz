@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>GraoRaiz.Web</RootNamespace>
+    <!-- Permite rodar em máquinas que só têm um .NET mais novo (ex.: .NET 10) -->
+    <RollForward>Major</RollForward>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Driver ADO.NET para MySQL -->
+    <PackageReference Include="MySqlConnector" Version="2.3.7" />
+    <!-- Documentação interativa da API (Swagger / OpenAPI) -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+</Project>

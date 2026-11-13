@@ -1,0 +1,223 @@
+@model ProdutoViewModel
+@{
+    var p = Model.Produto;
+    ViewData["Title"] = p.Nome;
+    var podeComprar = !Model.EhAdministrador;
+    var avaliacoes = Model.Avaliacoes;
+}
+<div class="container">
+    <p><a asp-action="Index" asp-route-categoria="@p.IdCategoria">Voltar para @p.NomeCategoria</a></p>
+    <div class="detalhe">
+        <partial name="_Saca" model="p" />
+        <div>
+            <div class="titulo-produto">
+                <h1>@p.Nome</h1>
+                @if (Model.Logado && podeComprar)
+                {
+                    <form asp-action="Favoritar" asp-route-id="@p.Id" method="post">
+                        <button type="submit" class="coracao grande @(Model.Favorito ? "ativo" : "")" aria-pressed="@(Model.Favorito ? "true" : "false")"
+                                aria-label="@(Model.Favorito ? "Remover dos favoritos" : "Adicionar aos favoritos")">
+                            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+                        </button>
+                    </form>
+                }
+            </div>
+            @if (avaliacoes.Total > 0)
+            {
+                <a href="#avaliacoes" class="link-nota"><partial name="_Nota" model="avaliacoes.Media" /> <span class="muted">(@avaliacoes.Total avaliação(ões))</span></a>
+            }
+            <p class="preco" style="font-size:1.6rem;margin-top:8px">@p.Preco.ToString("C")</p>
+            @if (p.EconomiaKit > 0)
+            {
+                <p><span class="selo economia">Economize @p.EconomiaKit.ToString("C")</span>
+                    <span class="muted">em relação a comprar os itens separados (@p.PrecoComponentes?.ToString("C")).</span></p>
+            }
+            @if (!string.IsNullOrWhiteSpace(p.Descricao))
+            {
+                <p>@p.Descricao</p>
+            }
+            <dl class="ficha">
+                <dt>Categoria</dt><dd>@p.NomeCategoria</dd>
+                @if (p.PontuacaoSca is not null)
+                {
+                    <dt>Pontuação SCA</dt><dd>@p.PontuacaoSca?.ToString("0.0") pontos</dd>
+                }
+                @if (!string.IsNullOrWhiteSpace(p.NotasSensoriais))
+                {
+                    <dt>Notas sensoriais</dt><dd>@p.NotasSensoriais</dd>
+                }
+                @if (p.Metodos.Count > 0)
+                {
+                    <dt>Ideal para</dt><dd>@string.Join(", ", p.Metodos)</dd>
+                }
+                <dt>Disponibilidade</dt>
+                <dd>
+                    @if (!p.Disponivel) { <span class="selo esgotado">Esgotado</span> }
+                    else { <span class="selo ok">Pronta entrega</span> }
+                </dd>
+                <dt>Entrega</dt>
+                <dd>Frete e prazo calculados pelo seu CEP · grátis acima de R$ 150,00</dd>
+            </dl>
+
+            @if (Model.EhAdministrador)
+            {
+                <div class="painel aviso-admin">
+                    <p style="margin:0 0 12px">Você está vendo a loja como administrador. Compras ficam disponíveis apenas para clientes.</p>
+                    <a class="botao secundario" asp-controller="Admin" asp-action="EditarProduto" asp-route-id="@p.Id">Editar este produto</a>
+                </div>
+            }
+            else if (p.Disponivel)
+            {
+                <form asp-controller="Carrinho" asp-action="Adicionar" method="post">
+                    <input type="hidden" name="idProduto" value="@p.Id" />
+                    @if (p.PermiteMoagem)
+                    {
+                        <fieldset class="moagens">
+                            <legend>Como você quer o café?</legend>
+                            @foreach (var tipo in TiposMoagem.Todos)
+                            {
+                                <label class="opcao">
+                                    <input type="radio" name="tipoMoagem" value="@tipo" checked="@(tipo == Model.MoagemSugerida)" />
+                                    @TiposMoagem.Descricao(tipo)
+                                    @if (tipo == Model.MoagemSugerida) { <span class="selo ok" style="margin-left:auto">Sugerida</span> }
+                                </label>
+                            }
+                        </fieldset>
+                    }
+                    <div class="comprar">
+                        <div class="campo">
+                            <label for="quantidade">Quantidade</label>
+                            <input id="quantidade" type="number" name="quantidade" value="1" min="1" max="@Math.Max(1, p.LimiteCompra)" />
+                        </div>
+                        <button class="botao" type="submit">Adicionar ao carrinho</button>
+                    </div>
+                </form>
+
+                @if (p.PermiteMoagem && !p.EhKit)
+                {
+                    <details class="painel assinar" id="assinar">
+                        <summary>
+                            <strong>Assine e ganhe 10% em toda entrega</strong>
+                            <span class="muted">Receba este café a cada 15 ou 30 dias. Pause ou cancele quando quiser.</span>
+                        </summary>
+                        @if (!Model.Logado)
+                        {
+                            <p style="margin-top:12px"><a asp-controller="Conta" asp-action="Login" asp-route-returnUrl="@Context.Request.Path#assinar">Entre na sua conta</a> para assinar.</p>
+                        }
+                        else if (Model.Enderecos.Count == 0)
+                        {
+                            <p style="margin-top:12px">Cadastre um endereço em <a asp-controller="Conta" asp-action="Minha" asp-fragment="enderecos">Minha conta</a> para assinar.</p>
+                        }
+                        else
+                        {
+                            <form asp-controller="Assinaturas" asp-action="Assinar" method="post" class="grade-form" style="margin-top:12px">
+                                <input type="hidden" name="idProduto" value="@p.Id" />
+                                <div class="campo">
+                                    <label for="a-frequencia">Entrega a cada</label>
+                                    <select id="a-frequencia" name="frequenciaDias">
+                                        <option value="15">15 dias</option>
+                                        <option value="30" selected>30 dias</option>
+                                    </select>
+                                </div>
+                                <div class="campo">
+                                    <label for="a-quantidade">Pacotes por entrega</label>
+                                    <select id="a-quantidade" name="quantidade">
+                                        @for (var i = 1; i <= 5; i++) { <option value="@i">@i</option> }
+                                    </select>
+                                </div>
+                                <div class="campo">
+                                    <label for="a-moagem">Moagem</label>
+                                    <select id="a-moagem" name="tipoMoagem">
+                                        @foreach (var tipo in TiposMoagem.Todos)
+                                        {
+                                            <option value="@tipo" selected="@(tipo == Model.MoagemSugerida)">@TiposMoagem.Descricao(tipo)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="campo">
+                                    <label for="a-endereco">Entregar em</label>
+                                    <select id="a-endereco" name="idEndereco">
+                                        @foreach (var e in Model.Enderecos) { <option value="@e.Id">@e.Resumo</option> }
+                                    </select>
+                                </div>
+                                <div style="grid-column:1/-1">
+                                    <p class="muted" style="margin:0 0 12px">Cada entrega sai por <strong>@((p.Preco * (1 - Assinaturas.Desconto)).ToString("C"))</strong> o pacote (em vez de @p.Preco.ToString("C")). A primeira entrega é gerada agora.</p>
+                                    <button class="botao" type="submit">Assinar este café</button>
+                                </div>
+                            </form>
+                        }
+                    </details>
+                }
+            }
+            else
+            {
+                <div class="painel aviso-esgotado">
+                    <p style="margin:0 0 12px"><strong>Este produto acabou.</strong> A próxima torra já está programada.</p>
+                    @if (!Model.Logado)
+                    {
+                        <a class="botao secundario" asp-controller="Conta" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">Entre para ser avisado quando chegar</a>
+                    }
+                    else if (Model.AvisoPendente)
+                    {
+                        <p class="selo ok" style="margin:0">Você será avisado pelo sino de notificações quando chegar.</p>
+                    }
+                    else
+                    {
+                        <form asp-action="AviseMe" asp-route-id="@p.Id" method="post">
+                            <button class="botao" type="submit">Avise-me quando chegar</button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <section id="avaliacoes" class="avaliacoes">
+        <div class="cabecalho-pagina">
+            <h2>Avaliações</h2>
+            @if (avaliacoes.Total > 0)
+            {
+                <p class="muted" style="margin:0"><partial name="_Nota" model="avaliacoes.Media" /> média de @avaliacoes.Total avaliação(ões)</p>
+            }
+        </div>
+        @if (avaliacoes.PodeAvaliar)
+        {
+            <form class="painel form-avaliacao" asp-action="Avaliar" asp-route-id="@p.Id" method="post">
+                <fieldset class="escolha-nota">
+                    <legend>Sua nota</legend>
+                    @for (var i = 5; i >= 1; i--)
+                    {
+                        <input type="radio" id="nota-@i" name="nota" value="@i" required />
+                        <label for="nota-@i" title="@i grão(s)"><span class="pular">@i</span></label>
+                    }
+                </fieldset>
+                <div class="campo">
+                    <label for="comentario">Comentário (opcional)</label>
+                    <textarea id="comentario" name="comentario" rows="3" maxlength="500" placeholder="Como ficou na sua xícara?"></textarea>
+                </div>
+                <button class="botao" type="submit">Enviar avaliação</button>
+            </form>
+        }
+        else if (!Model.EhAdministrador && avaliacoes.MotivoNaoPodeAvaliar is not null)
+        {
+            <p class="muted">@avaliacoes.MotivoNaoPodeAvaliar</p>
+        }
+
+        @if (avaliacoes.Total == 0)
+        {
+            <p class="vazio">Ainda não há avaliações. Quem receber este produto poderá contar como foi.</p>
+        }
+        else
+        {
+            <ul class="lista-avaliacoes">
+                @foreach (var a in avaliacoes.Avaliacoes)
+                {
+                    <li>
+                        <div><partial name="_Nota" model="(decimal)a.Nota" /> <strong>@a.NomeCliente</strong> <span class="muted">· @a.DataRegistro.ToString("dd/MM/yyyy")</span></div>
+                        @if (!string.IsNullOrWhiteSpace(a.Comentario)) { <p>@a.Comentario</p> }
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</div>

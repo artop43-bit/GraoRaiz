@@ -1,0 +1,15 @@
+@{
+    var acao = ViewContext.RouteData.Values["action"]?.ToString();
+    string? Atual(params string[] a) => a.Contains(acao) ? "true" : null;
+}
+<nav class="admin-nav" aria-label="Painel administrativo">
+    <a class="filtro" asp-action="Index" aria-current="@Atual("Index")">Visão geral</a>
+    <a class="filtro" asp-action="Pedidos" aria-current="@Atual("Pedidos", "Pedido")">Pedidos</a>
+    <a class="filtro" asp-action="Produtos" aria-current="@Atual("Produtos", "NovoProduto", "EditarProduto", "SalvarProduto")">Produtos e estoque</a>
+    <a class="filtro" asp-action="Movimentacoes" aria-current="@Atual("Movimentacoes")">Movimentações</a>
+    <a class="filtro" asp-action="Assinaturas" aria-current="@Atual("Assinaturas")">Assinaturas</a>
+    <a class="filtro" asp-action="Cupons" aria-current="@Atual("Cupons")">Cupons</a>
+    <a class="filtro" asp-action="Avaliacoes" aria-current="@Atual("Avaliacoes")">Avaliações</a>
+    <a class="filtro" asp-action="Relatorio" aria-current="@Atual("Relatorio")">Relatório de vendas</a>
+    <a class="filtro" href="/swagger" target="_blank" rel="noopener">Documentação da API</a>
+</nav>

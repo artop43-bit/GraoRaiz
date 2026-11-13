@@ -1,0 +1,93 @@
+@model CarrinhoViewModel
+@{
+    ViewData["Title"] = "Carrinho";
+    var r = Model.Resumo;
+}
+<div class="container">
+    <h1>Carrinho</h1>
+    @if (Model.Itens.Count == 0)
+    {
+        <div class="vazio">
+            <h2>Seu carrinho está vazio</h2>
+            <p>Escolha um café no catálogo e defina a moagem.</p>
+            <a class="botao" asp-controller="Catalogo" asp-action="Index">Ir para o catálogo</a>
+        </div>
+    }
+    else
+    {
+        <div class="duas-colunas">
+            <div class="rolagem">
+                <table class="tabela">
+                    <thead>
+                        <tr><th>Produto</th><th>Quantidade</th><th class="num">Subtotal</th><th><span class="pular">Ações</span></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Itens)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.Nome</strong><br />
+                                    <span class="muted">@item.MoagemDescricao · @item.PrecoUnitario.ToString("C") cada</span>
+                                </td>
+                                <td>
+                                    <form class="qtd" asp-action="Alterar" method="post">
+                                        <input type="hidden" name="chave" value="@item.Chave" />
+                                        <label class="pular" for="qtd-@item.Chave">Quantidade de @item.Nome</label>
+                                        <input id="qtd-@item.Chave" type="number" name="quantidade" min="0" max="10" value="@item.Quantidade" data-enviar-ao-mudar />
+                                        <noscript><button class="botao secundario pequeno" type="submit">Atualizar</button></noscript>
+                                    </form>
+                                </td>
+                                <td class="num">@item.Subtotal.ToString("C")</td>
+                                <td>
+                                    <form asp-action="Remover" method="post">
+                                        <input type="hidden" name="chave" value="@item.Chave" />
+                                        <button class="botao secundario pequeno" type="submit" aria-label="Remover @item.Nome">Remover</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <aside class="painel resumo" aria-label="Resumo da compra">
+                <h2>Resumo</h2>
+                <div class="linha"><span>Produtos</span><span>@Model.Subtotal.ToString("C")</span></div>
+                @if (r is not null && r.DescontoCupom > 0)
+                {
+                    <div class="linha desconto"><span>Cupom @r.CupomAplicado</span><span>− @r.DescontoCupom.ToString("C")</span></div>
+                }
+                <div class="linha"><span>Frete</span><span>@(r?.Frete == 0 ? "Grátis" : "calculado pelo CEP")</span></div>
+
+                @if (r is not null && r.FaltaParaFreteGratis > 0)
+                {
+                    var progresso = (int)Math.Round(Model.Subtotal / PedidoService.FreteGratisAPartirDe * 100);
+                    <div class="frete-gratis" role="status">
+                        <span>Faltam <strong>@r.FaltaParaFreteGratis.ToString("C")</strong> para o frete grátis</span>
+                        <div class="barra-progresso" aria-hidden="true"><span style="width:@progresso%"></span></div>
+                    </div>
+                }
+                else
+                {
+                    <p class="frete-gratis ok">Você ganhou frete grátis.</p>
+                }
+
+                <form class="cupom" asp-action="AplicarCupom" method="post">
+                    <label for="cupom">Cupom de desconto</label>
+                    <div class="linha-campo">
+                        <input id="cupom" name="cupom" type="text" value="@Model.Cupom" placeholder="Ex.: BEMVINDO10" autocomplete="off" style="text-transform:uppercase" />
+                        <button class="botao secundario pequeno" type="submit">Aplicar</button>
+                    </div>
+                </form>
+                @if (Model.Cupom is not null)
+                {
+                    <form asp-action="AplicarCupom" method="post"><button class="link" type="submit">Remover cupom</button></form>
+                }
+
+                <div class="linha total"><span>Total parcial</span><span>@((Model.Subtotal - (r?.DescontoCupom ?? 0)).ToString("C"))</span></div>
+                <p class="muted" style="font-size:.88rem;margin:4px 0 0">O frete, o prazo e o uso dos seus Grãos aparecem na próxima etapa.</p>
+                <a class="botao largo" style="margin-top:16px" asp-action="Checkout">Continuar para entrega</a>
+                <a class="botao secundario largo" style="margin-top:8px" asp-controller="Catalogo" asp-action="Index">Escolher mais cafés</a>
+            </aside>
+        </div>
+    }
+</div>

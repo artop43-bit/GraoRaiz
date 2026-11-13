@@ -1,0 +1,144 @@
+@model PainelViewModel
+@{
+    ViewData["Title"] = "Painel";
+    var maxDia = Math.Max(1m, Model.VendasPorDia.Count == 0 ? 1 : Model.VendasPorDia.Max(v => v.Faturamento));
+    var maxProduto = Math.Max(1m, Model.MaisVendidos.Count == 0 ? 1 : Model.MaisVendidos.Max(v => v.Faturamento));
+    var totalPeriodo = Model.VendasPorDia.Sum(v => v.Faturamento);
+    const int larguraBarra = 26, espaco = 8, alturaGrafico = 150;
+}
+<div class="container">
+    <h1>Painel da torrefação</h1>
+    <partial name="_Menu" />
+
+    <div class="indicadores cinco">
+        <div class="indicador"><strong>@Model.Indicadores.PedidosHoje</strong><span>pedidos hoje</span></div>
+        <div class="indicador"><strong>@Model.Indicadores.FaturamentoMes.ToString("C")</strong><span>faturamento no mês</span></div>
+        <div class="indicador"><strong>@Model.Indicadores.PedidosEmAberto</strong><span>pedidos em andamento</span></div>
+        <a class="indicador" asp-action="Assinaturas"><strong>@Model.AssinaturasAtivas</strong><span>assinaturas ativas@(Model.AssinaturasParaHoje > 0 ? $" · {Model.AssinaturasParaHoje} para hoje" : "")</span></a>
+        <div class="indicador alerta-estoque"><strong data-alertas>@Model.Alertas.Count</strong><span>alertas de estoque</span></div>
+    </div>
+
+    <div class="grade-graficos">
+        <section class="painel">
+            <div class="cabecalho-pagina"><h2>Vendas dos últimos 14 dias</h2><span class="muted">@totalPeriodo.ToString("C") no período</span></div>
+            <svg class="grafico" viewBox="0 0 @(Model.VendasPorDia.Count * (larguraBarra + espaco)) @(alturaGrafico + 24)" role="img"
+                 aria-label="Faturamento por dia nos últimos 14 dias. Total de @totalPeriodo.ToString("C").">
+                <line x1="0" x2="100%" y1="@alturaGrafico" y2="@alturaGrafico" class="eixo" />
+                @for (var i = 0; i < Model.VendasPorDia.Count; i++)
+                {
+                    var v = Model.VendasPorDia[i];
+                    var h = v.Faturamento == 0 ? 0 : Math.Max(4, (double)(v.Faturamento / maxDia) * (alturaGrafico - 18));
+                    var x = i * (larguraBarra + espaco) + espaco / 2;
+                    <g class="marca-grafico">
+                        <rect x="@x" y="0" width="@larguraBarra" height="@alturaGrafico" class="alvo" />
+                        @if (h > 0)
+                        {
+                            <path class="barra-dia" d="M@(x) @(alturaGrafico) V@((alturaGrafico - h + 4).ToString(System.Globalization.CultureInfo.InvariantCulture)) q0 -4 4 -4 h@(larguraBarra - 8) q4 0 4 4 V@(alturaGrafico) Z" />
+                        }
+                        <text x="@(x + larguraBarra / 2)" y="@(alturaGrafico + 16)" class="rotulo-eixo">@v.Dia.ToString("dd")</text>
+                        <title>@v.Dia.ToString("dd/MM"): @v.Faturamento.ToString("C") em @v.Pedidos pedido(s)</title>
+                    </g>
+                }
+            </svg>
+            <p class="muted legenda-grafico">Passe o mouse sobre um dia para ver o valor. Pedidos cancelados não entram na soma.</p>
+        </section>
+        <section class="painel">
+            <div class="cabecalho-pagina"><h2>Mais vendidos</h2><span class="muted">últimos 30 dias</span></div>
+            @if (Model.MaisVendidos.Count == 0)
+            {
+                <p class="muted">Ainda não há vendas no período.</p>
+            }
+            else
+            {
+                <ol class="ranking">
+                    @foreach (var v in Model.MaisVendidos)
+                    {
+                        <li title="@v.UnidadesVendidas unidade(s) · @v.Faturamento.ToString("C")">
+                            <div class="ranking-topo"><span>@v.Produto</span><strong>@v.Faturamento.ToString("C")</strong></div>
+                            <div class="ranking-barra"><span style="width:@((int)Math.Max(2, v.Faturamento / maxProduto * 100))%"></span></div>
+                            <small class="muted">@v.UnidadesVendidas unidade(s)</small>
+                        </li>
+                    }
+                </ol>
+            }
+        </section>
+    </div>
+
+    <div class="grade-admin">
+        <section>
+            <div class="cabecalho-pagina"><h2>Últimos pedidos</h2><a asp-action="Pedidos">Ver todos</a></div>
+            @if (Model.UltimosPedidos.Count == 0)
+            {
+                <p class="vazio">Nenhum pedido ainda. Faça uma compra pelo site ou pelo aplicativo.</p>
+            }
+            else
+            {
+                <div class="rolagem">
+                    <table class="tabela">
+                        <thead><tr><th>Pedido</th><th>Cliente</th><th>Status</th><th class="num">Total</th></tr></thead>
+                        <tbody>
+                            @foreach (var p in Model.UltimosPedidos)
+                            {
+                                <tr>
+                                    <td><a asp-action="Pedido" asp-route-id="@p.Id">#@p.Id</a></td>
+                                    <td>@p.NomeCliente</td>
+                                    <td><partial name="_Status" model="p.Status" /></td>
+                                    <td class="num">@p.ValorTotal.ToString("C")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+        <section class="painel">
+            <h2>Hora de torrar</h2>
+            <p class="muted">Produtos que atingiram o estoque mínimo (alerta gerado pela trigger do banco). Atualiza sozinho.</p>
+            <ul class="lista-alertas" data-lista-alertas>
+                @foreach (var a in Model.Alertas)
+                {
+                    <li>
+                        <a asp-action="EditarProduto" asp-route-id="@a.IdProduto"><strong>@a.NomeProduto</strong></a><br />
+                        <span class="muted">@a.QuantidadeAtual em estoque · @a.DataAlerta.ToString("dd/MM HH:mm")</span>
+                    </li>
+                }
+            </ul>
+            <p class="muted" data-sem-alertas hidden="@(Model.Alertas.Count > 0)">Nenhum produto abaixo do estoque mínimo.</p>
+        </section>
+    </div>
+
+    <section class="painel" style="margin-top:24px">
+        <div class="cabecalho-pagina">
+            <h2>Estoque em tempo real</h2>
+            <p class="ao-vivo" data-ao-vivo><span class="ponto" aria-hidden="true"></span> atualizado às <span data-hora>--:--:--</span></p>
+        </div>
+        <p class="muted">Leitura direta do banco a cada 3 segundos. Toda venda feita no site ou no aplicativo aparece aqui. Use +10 e +50 para registrar a chegada de mercadoria.</p>
+        <div class="rolagem">
+            <table class="tabela">
+                <thead><tr><th>Produto</th><th>Categoria</th><th class="num">Em estoque</th><th class="num">Mínimo</th><th>Situação</th><th>Entrada</th></tr></thead>
+                <tbody>
+                    @foreach (var p in Model.Estoque)
+                    {
+                        <tr data-estoque-id="@p.Id">
+                            <td><a asp-action="EditarProduto" asp-route-id="@p.Id">@p.Nome</a></td>
+                            <td>@p.NomeCategoria</td>
+                            <td class="num"><strong data-qtd>@p.Quantidade</strong></td>
+                            <td class="num" data-min>@(p.EhKit ? "—" : p.EstoqueMinimo.ToString())</td>
+                            <td data-situacao>
+                                @if (!p.Ativo) { <span class="selo inativo">Inativo</span> }
+                                else if (p.Quantidade == 0) { <span class="selo esgotado">Esgotado</span> }
+                                else if (p.EstoqueBaixo) { <span class="selo baixo">Repor</span> }
+                                else { <span class="selo ok">Normal</span> }
+                            </td>
+                            <td><partial name="_Repor" model="p" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script>monitorarEstoque('@Url.Action("EstoqueAtual", "Admin")');</script>
+}

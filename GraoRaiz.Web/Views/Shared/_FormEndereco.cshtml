@@ -1,0 +1,19 @@
+@model string
+@* Formulário de endereço com preenchimento automático pelo CEP (ViaCEP). O modelo é o controlador que recebe o envio. *@
+<form asp-controller="@Model" asp-action="NovoEndereco" method="post" data-form-endereco>
+    <div class="grade-form">
+        <div class="campo">
+            <label for="Cep">CEP</label>
+            <input id="Cep" name="Cep" type="text" inputmode="numeric" maxlength="9" required placeholder="74180-040"
+                   data-cep aria-describedby="cep-status" />
+            <span id="cep-status" class="dica" data-cep-status>Digite o CEP e o endereço é preenchido sozinho.</span>
+        </div>
+        <div class="campo"><label for="Logradouro">Rua</label><input id="Logradouro" name="Logradouro" type="text" required data-cep-campo="logradouro" /></div>
+        <div class="campo"><label for="Numero">Número</label><input id="Numero" name="Numero" type="text" required /></div>
+        <div class="campo"><label for="Complemento">Complemento</label><input id="Complemento" name="Complemento" type="text" /></div>
+        <div class="campo"><label for="Bairro">Bairro</label><input id="Bairro" name="Bairro" type="text" required data-cep-campo="bairro" /></div>
+        <div class="campo"><label for="Cidade">Cidade</label><input id="Cidade" name="Cidade" type="text" required data-cep-campo="localidade" /></div>
+        <div class="campo"><label for="Uf">UF</label><input id="Uf" name="Uf" type="text" maxlength="2" required placeholder="GO" data-cep-campo="uf" /></div>
+    </div>
+    <button class="botao secundario" type="submit">Salvar endereço</button>
+</form>

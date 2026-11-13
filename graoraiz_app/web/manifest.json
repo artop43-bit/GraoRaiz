@@ -1,0 +1,12 @@
+{
+  "name": "Grão Raiz",
+  "short_name": "Grão Raiz",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F8F6F1",
+  "theme_color": "#3B2418",
+  "description": "Grão Raiz Cafés Especiais",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "icons": []
+}

@@ -1,0 +1,14 @@
+@model Produto
+@* Botões de entrada rápida de estoque (procedure SP_REPOR_ESTOQUE). Kits não têm estoque próprio. *@
+@if (Model.EhKit)
+{
+    <span class="muted" title="Calculado pelos componentes">kit</span>
+}
+else
+{
+    <form class="repor" asp-controller="Admin" asp-action="Repor" asp-route-id="@Model.Id" method="post">
+        <input type="hidden" name="voltarPara" value="@(Context.Request.Path)" />
+        <button class="botao secundario pequeno" type="submit" name="quantidade" value="10" aria-label="Repor 10 unidades de @Model.Nome">+10</button>
+        <button class="botao secundario pequeno" type="submit" name="quantidade" value="50" aria-label="Repor 50 unidades de @Model.Nome">+50</button>
+    </form>
+}
